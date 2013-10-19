@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" 
+              android:layout_width="fill_parent" android:layout_height="fill_parent"
+              android:background="#ffffff"
+              android:orientation="vertical" android:padding="10dp">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Raspberry Pi Hostname\nor IP Address" />
+    
+    <EditText android:id="@+id/ipaddress" android:layout_width="fill_parent" 
+              android:layout_height="wrap_content"
+              android:inputType="text|textEmailAddress" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SSH Username" />
+    
+    <EditText android:id="@+id/sshusername" android:layout_width="fill_parent" 
+              android:layout_height="wrap_content"
+              android:inputType="text|textEmailAddress" />
+    
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SSH Password" />
+    
+    <EditText android:id="@+id/sshpassword" android:layout_width="fill_parent" 
+              android:layout_height="wrap_content" 
+              android:inputType="textPassword"/>
+</LinearLayout>
