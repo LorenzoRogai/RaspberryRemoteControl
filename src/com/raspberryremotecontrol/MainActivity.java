@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
             public void run() {
                 DecimalFormat df;
                 try {
-                    while (isOnline()) {
+                    while (isOnline() && session.isConnected()) {
                         try {
                             if (infos[0].Description.equals("")) {
                                 String hostname = ExecuteCommand("hostname -f");
@@ -159,7 +159,7 @@ public class MainActivity extends Activity {
                             Integer uptimeseconds = d.intValue();
                             String uptime = convertMS(uptimeseconds * 1000);
                             infos[5].Description = uptime;
-                          
+
                             String info = ExecuteCommand("cat /proc/meminfo");
                             info = info.replaceAll(" ", "");
                             info = info.replaceAll("kB", "");
@@ -230,23 +230,25 @@ public class MainActivity extends Activity {
 
     public String ExecuteCommand(String command) {
         try {
-            channel = (ChannelExec) session.openChannel("exec");
-            in = new BufferedReader(new InputStreamReader(channel.getInputStream()));
-            channel.setCommand(command);
-            channel.connect();
+            if (session.isConnected()) {
+                channel = (ChannelExec) session.openChannel("exec");
+                in = new BufferedReader(new InputStreamReader(channel.getInputStream()));
+                channel.setCommand(command);
+                channel.connect();
 
-            StringBuilder builder = new StringBuilder();
+                StringBuilder builder = new StringBuilder();
 
-            String line = null;
-            while ((line = in.readLine()) != null) {
-                builder.append(line).append(System.getProperty("line.separator"));
-            }
+                String line = null;
+                while ((line = in.readLine()) != null) {
+                    builder.append(line).append(System.getProperty("line.separator"));
+                }
 
-            String output = builder.toString();
-            if (output.lastIndexOf("\n") > 0) {
-                return output.substring(0, output.lastIndexOf("\n"));
-            } else {
-                return output;
+                String output = builder.toString();
+                if (output.lastIndexOf("\n") > 0) {
+                    return output.substring(0, output.lastIndexOf("\n"));
+                } else {
+                    return output;
+                }
             }
         } catch (Exception e) {
             ThrowException(e.getMessage());
@@ -307,6 +309,34 @@ public class MainActivity extends Activity {
     }
 
     public void shutdown(View view) {
-        ExecuteCommand("shutdown -h now");
+        new AlertDialog.Builder(this)
+                .setTitle("Confirm")
+                .setMessage("Are you sure you want to shutdown your Raspberry Pi?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                ExecuteCommand("shutdown -h now");
+                DisconnectSSH();
+            }
+        })
+                .setNegativeButton("No", null)
+                .show();
+
+    }
+
+    public void reboot(View view) {
+        new AlertDialog.Builder(this)
+                .setTitle("Confirm")
+                .setMessage("Are you sure you want to reboot your Raspberry Pi?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                ExecuteCommand("shutdown -r now");
+                DisconnectSSH();
+            }
+        })
+                .setNegativeButton("No", null)
+                .show();
+
     }
 }
