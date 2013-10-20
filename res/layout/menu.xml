@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/showsettings"
-          android:icon="@drawable/settings"
-          android:title="Show Settings"        
-          android:showAsAction="ifRoom"/>   
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+ 
+    <item
+        android:id="@+id/connsettings"        
+        android:title="Change connection settings"/>
+    <item
+        android:id="@+id/changerefreshrate"        
+        android:title="Change refresh rate"/>
+    <item
+        android:id="@+id/edit"    
+        android:title="Edit">        
+    </item>
+ 
 </menu>

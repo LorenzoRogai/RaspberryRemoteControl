@@ -57,12 +57,14 @@ public class InfoAdapter extends ArrayAdapter<Info> {
             if (holder.progressBar.getVisibility() == View.GONE) {
                 holder.progressBar.setVisibility(View.VISIBLE);
             }
-            if (holder.progressBar.getProgress() != info.ProgressBarProgress) {              
-               
+            if (holder.progressBar.getProgress() != info.ProgressBarProgress) {
+
                 holder.progressBar.setText(info.ProgressBarProgress + "%");
                 holder.progressBar.setTextSize(16);
                 holder.progressBar.setProgress(info.ProgressBarProgress);
             }
+        } else {
+            holder.progressBar.setVisibility(View.GONE);
         }
 
         return row;

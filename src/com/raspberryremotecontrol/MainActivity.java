@@ -10,8 +10,10 @@ import android.widget.*;
 import android.content.*;
 import android.net.*;
 import java.util.*;
+import java.util.regex.*;
 import java.io.*;
 import java.text.*;
+import java.lang.reflect.*;
 
 public class MainActivity extends Activity {
 
@@ -21,6 +23,7 @@ public class MainActivity extends Activity {
     BufferedReader in;
     InfoAdapter adapter;
     private ListView listView;
+    Integer refreshrate = 5000;
     Info infos[] = new Info[]{
         new Info(R.drawable.hostname, "Hostname", "", -1),
         new Info(R.drawable.distribution, "Distribution", "", -1),
@@ -28,7 +31,9 @@ public class MainActivity extends Activity {
         new Info(R.drawable.firmware, "Firmware", "", -1),
         new Info(R.drawable.cpuheat, "Cpu Heat", "", -1),
         new Info(R.drawable.uptime, "Uptime", "", -1),
-        new Info(R.drawable.ram, "Ram Info", "", -1)
+        new Info(R.drawable.ram, "Ram Info", "", -1),
+        new Info(R.drawable.cpu, "Cpu", "", -1),
+        new Info(R.drawable.storage, "Storage", "", -1)
     };
 
     @Override
@@ -36,7 +41,15 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
+        getOverflowMenu();
+
         prefs = getSharedPreferences("com.raspberryremotecontrol", MODE_PRIVATE);
+
+        if (prefs.getString("refreshrate", null) != null) {
+            refreshrate = Integer.parseInt(prefs.getString("refreshrate", null));
+        } else {
+            prefs.edit().putString("refreshrate", "5000").commit();
+        }
 
         if (prefs.getBoolean("firstrun", true)) {
             ShowSetupDialog();
@@ -46,60 +59,115 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void getOverflowMenu() {
+
+        try {
+            ViewConfiguration config = ViewConfiguration.get(this);
+            Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+            if (menuKeyField != null) {
+                menuKeyField.setAccessible(true);
+                menuKeyField.setBoolean(config, false);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.showsettings:
+            case R.id.connsettings:
                 ShowSetupDialog();
+                return true;
+            case R.id.changerefreshrate:
+                ShowChangeRefreshRateDialog();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.layout.menu, menu);
         return true;
     }
 
+    public void ShowChangeRefreshRateDialog() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                final View dialog_layout = getLayoutInflater().inflate(R.layout.refreshrate_dialog_layout, null);
+                final NumberPicker np = (NumberPicker) dialog_layout.findViewById(R.id.numberPicker1);
+                np.setMaxValue(30);
+                np.setMinValue(1);
+                np.setWrapSelectorWheel(false);
+
+                np.setValue(Integer.parseInt(prefs.getString("refreshrate", null)) / 1000);
+
+                builder.setTitle("Change refresh rate");
+                builder.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        prefs.edit().putString("refreshrate", Integer.toString(np.getValue() * 1000)).commit();
+                        refreshrate = np.getValue() * 1000;
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                    }
+                });
+
+                AlertDialog Dialog = builder.create();
+                Dialog.setView(dialog_layout);
+                Dialog.show();
+            }
+        });
+    }
+
     public void ShowSetupDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        final View dialog_layout = getLayoutInflater().inflate(R.layout.settings_dialog_layout, null);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                final View dialog_layout = getLayoutInflater().inflate(R.layout.settings_dialog_layout, null);
 
-        builder.setTitle("Connection Settings");
+                builder.setTitle("Connection Settings");
 
-        final EditText IpAddress = (EditText) dialog_layout.findViewById(R.id.ipaddress);
-        final EditText username = (EditText) dialog_layout.findViewById(R.id.sshusername);
-        final EditText password = (EditText) dialog_layout.findViewById(R.id.sshpassword);
+                final EditText IpAddress = (EditText) dialog_layout.findViewById(R.id.ipaddress);
+                final EditText username = (EditText) dialog_layout.findViewById(R.id.sshusername);
+                final EditText password = (EditText) dialog_layout.findViewById(R.id.sshpassword);
 
-        String currIpAddress = prefs.getString("ipaddress", null);
-        String currusername = prefs.getString("sshusername", null);
-        String currpassword = prefs.getString("sshpassword", null);
+                String currIpAddress = prefs.getString("ipaddress", null);
+                String currusername = prefs.getString("sshusername", null);
+                String currpassword = prefs.getString("sshpassword", null);
 
-        IpAddress.setText(currIpAddress);
-        username.setText(currusername);
-        password.setText(currpassword);
+                IpAddress.setText(currIpAddress);
+                username.setText(currusername);
+                password.setText(currpassword);
 
-        builder.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                prefs.edit().putString("ipaddress", IpAddress.getText().toString()).commit();
-                prefs.edit().putString("sshusername", username.getText().toString()).commit();
-                prefs.edit().putString("sshpassword", password.getText().toString()).commit();
+                builder.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        prefs.edit().putString("ipaddress", IpAddress.getText().toString()).commit();
+                        prefs.edit().putString("sshusername", username.getText().toString()).commit();
+                        prefs.edit().putString("sshpassword", password.getText().toString()).commit();
 
-                ConnectSSH();
+                        ConnectSSH();
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        finish();
+                    }
+                });
+
+                AlertDialog Dialog = builder.create();
+                Dialog.setView(dialog_layout);
+                Dialog.show();
             }
         });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                finish();
-            }
-        });
-
-        AlertDialog Dialog = builder.create();
-        Dialog.setView(dialog_layout);
-        Dialog.show();
     }
 
     public boolean isOnline() {
@@ -177,13 +245,44 @@ public class MainActivity extends Activity {
                             infos[6].Description = "Used: " + MemUsed + "Mb\nFree: " + fMemFree + "Mb\nTot: " + MemTot + "Mb";
                             infos[6].ProgressBarProgress = Percentage;
 
+                            df = new DecimalFormat("0.0");
+                            String[] loadavg = ExecuteCommand("cat /proc/loadavg").split(" ");
+                            String cpuCurFreq = df.format(Float.parseFloat(ExecuteCommand("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")) / 1000) + "Mhz";
+                            String cpuMinFreq = df.format(Float.parseFloat(ExecuteCommand("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq")) / 1000) + "Mhz";
+                            String cpuMaxFreq = df.format(Float.parseFloat(ExecuteCommand("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq")) / 1000) + "Mhz";
+
+                            infos[7].Description = "Loads\n" + loadavg[0] + " [1 min] · " + loadavg[1] + " [5 min] · " + loadavg[2] + " [15 min]\nRunning at " + cpuCurFreq + "\n(min: " + cpuMinFreq + " · max: " + cpuMaxFreq + ")";
+
+                            String Drives = ExecuteCommand("df -T | grep -vE \"tmpfs|rootfs|Filesystem\"");
+                            lines = Drives.split(System.getProperty("line.separator"));
+
+                            infos[8].Description = "";
+
+                            Integer percentages = 0;
+                            for (int i = 1; i < lines.length; i++) {
+                                String line = lines[i];
+                                line = line.replaceAll("\\s+", "|");
+                                String[] DriveInfos = line.split("\\|");
+                                String name = DriveInfos[6];
+                                String total = kConv(Integer.parseInt(DriveInfos[2]));
+                                String free = kConv(Integer.parseInt(DriveInfos[4]));
+                                String used = kConv(Integer.parseInt(DriveInfos[3]));
+                                String format = DriveInfos[1];
+                                Integer percentage = Integer.parseInt(DriveInfos[5].replace("%", ""));
+                                percentages += percentage;
+
+                                infos[8].Description += name + "\n" + "Free: " + free + " · used: " + used + "\nTotal: " + total + " · format: " + format + ((i == (lines.length - 1)) ? "" : "\n\n");
+                            }
+
+                            infos[8].ProgressBarProgress = percentages / (lines.length - 1);
+
                             runOnUiThread(new Runnable() {
                                 public void run() {
                                     BuildList();
                                 }
                             });
 
-                            Thread.sleep(5000);
+                            Thread.sleep(refreshrate);
 
                         } catch (Exception e) {
                             ThrowException(e.getMessage());
@@ -338,5 +437,17 @@ public class MainActivity extends Activity {
                 .setNegativeButton("No", null)
                 .show();
 
+    }
+
+    public static String kConv(Integer kSize) {
+        char[] unit = {'K', 'M', 'G', 'T'};
+        Integer i = 0;
+        Integer size = kSize;
+        while (i < 3 && size > 1024) {
+            i++;
+            size = size / 1024;
+        }
+        DecimalFormat df = new DecimalFormat("0.00");
+        return df.format(size) + unit[i];
     }
 }
