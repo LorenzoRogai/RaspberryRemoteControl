@@ -2,14 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
  
     <item
-        android:id="@+id/connsettings"        
-        android:title="Change connection settings"/>
+        android:id="@+id/showprofiles"        
+        android:title="Show profiles"/>     
+    
     <item
         android:id="@+id/changerefreshrate"        
-        android:title="Change refresh rate"/>
-    <item
-        android:id="@+id/edit"    
-        android:title="Edit">        
-    </item>
+        android:title="Change refresh rate"/>   
  
 </menu>

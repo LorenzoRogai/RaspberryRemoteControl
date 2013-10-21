@@ -2,15 +2,15 @@ package com.raspberryremotecontrol;
 
 import com.jcraft.jsch.*;
 import android.view.*;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.os.Bundle;
+import android.app.*;
+import android.app.Dialog;
 import android.widget.*;
 import android.content.*;
+import android.graphics.Color;
 import android.net.*;
+import android.os.*;
+import android.widget.AdapterView.OnItemClickListener;
 import java.util.*;
-import java.util.regex.*;
 import java.io.*;
 import java.text.*;
 import java.lang.reflect.*;
@@ -24,6 +24,8 @@ public class MainActivity extends Activity {
     InfoAdapter adapter;
     private ListView listView;
     Integer refreshrate = 5000;
+    List<Profile> Profiles = new ArrayList<Profile>();
+    int CurrProfile = -1;
     Info infos[] = new Info[]{
         new Info(R.drawable.hostname, "Hostname", "", -1),
         new Info(R.drawable.distribution, "Distribution", "", -1),
@@ -52,11 +54,126 @@ public class MainActivity extends Activity {
         }
 
         if (prefs.getBoolean("firstrun", true)) {
-            ShowSetupDialog();
+            CreateNewProfile();
             prefs.edit().putBoolean("firstrun", false).commit();
         } else {
-            ConnectSSH();
+            SelectProfile();
         }
+    }
+
+    private void FetchProfiles() {
+        String profiles = prefs.getString("profiles", null);
+        for (String profile : profiles.split("\\|\\|")) {
+            String[] data = profile.split("\\|");
+            String Name = data[0];
+            String IpAddress = data[1];
+            String Username = data[2];
+            String Password = data[3];
+            Profiles.add(new Profile(Name, IpAddress, Username, Password));
+        }
+    }
+
+    private void SaveProfiles() {
+        String profiles = "";
+        for (Profile p : Profiles) {
+            profiles += p.Name + "|" + p.IpAddress + "|" + p.Username + "|" + p.Password + "||";
+        }
+
+        prefs.edit().putString("profiles", profiles).commit();
+    }
+    int lastChecked = 0;
+
+    private void SelectProfile() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (Profiles.isEmpty()) {
+                    FetchProfiles();
+                }
+
+                final String[] ProfilesName = new String[Profiles.size()];
+
+                for (int i = 0; i < Profiles.size(); i++) {
+                    ProfilesName[i] = Profiles.get(i).Name;
+                }
+
+                final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                final View dialog_layout = getLayoutInflater().inflate(R.layout.select_profile_dialog_layout, null);
+                final ListView lv = (ListView) dialog_layout.findViewById(R.id.profiles);
+                ArrayAdapter adapter1 = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_single_choice, ProfilesName);
+                lv.setAdapter(adapter1);
+                lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+
+                lv.setItemChecked(0, true);
+
+                lv.setOnItemClickListener(new OnItemClickListener() {
+                    boolean somethingChecked = false;
+
+                    public void onItemClick(AdapterView arg0, View arg1, int arg2,
+                            long arg3) {
+                        if (somethingChecked) {
+                            ListView lv = (ListView) arg0;
+                            TextView tv = (TextView) lv.getChildAt(lastChecked);
+                            CheckedTextView cv = (CheckedTextView) tv;
+                            cv.setChecked(false);
+                        }
+                        ListView lv = (ListView) arg0;
+                        TextView tv = (TextView) lv.getChildAt(arg2);
+                        CheckedTextView cv = (CheckedTextView) tv;
+                        if (!cv.isChecked()) {
+                            cv.setChecked(true);
+                        }
+                        lastChecked = arg2;
+                        somethingChecked = true;
+                    }
+                });
+
+                builder.setTitle("Profiles");
+                builder.setPositiveButton("Select", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        CurrProfile = lastChecked;
+
+                        ConnectSSH();
+                    }
+                });
+                builder.setNeutralButton("New", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        CreateNewProfile();
+                    }
+                });
+
+                builder.setNegativeButton("Delete", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                    }
+                });
+
+                final AlertDialog Dialog = builder.create();
+
+                Dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                    @Override
+                    public void onShow(final DialogInterface dialog) {
+                        Button deletebutton = Dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+                        deletebutton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                if (Profiles.size() == 1) {
+                                    Toast.makeText(getApplicationContext(), "Can't delete the only profile available", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Profiles.remove(lastChecked);
+                                    SaveProfiles();
+                                    dialog.dismiss();
+                                    SelectProfile();
+                                }
+                            }
+                        });
+                    }
+                });
+
+                Dialog.setView(dialog_layout);
+                Dialog.show();
+            }
+        });
     }
 
     private void getOverflowMenu() {
@@ -77,8 +194,8 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.connsettings:
-                ShowSetupDialog();
+            case R.id.showprofiles:
+                SelectProfile();
                 return true;
             case R.id.changerefreshrate:
                 ShowChangeRefreshRateDialog();
@@ -127,34 +244,27 @@ public class MainActivity extends Activity {
         });
     }
 
-    public void ShowSetupDialog() {
+    public void CreateNewProfile() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                final View dialog_layout = getLayoutInflater().inflate(R.layout.settings_dialog_layout, null);
+                final View dialog_layout = getLayoutInflater().inflate(R.layout.profile_dialog_layout, null);
 
-                builder.setTitle("Connection Settings");
+                builder.setTitle("Create new profile");
 
+                final EditText ProfileName = (EditText) dialog_layout.findViewById(R.id.profilename);
                 final EditText IpAddress = (EditText) dialog_layout.findViewById(R.id.ipaddress);
                 final EditText username = (EditText) dialog_layout.findViewById(R.id.sshusername);
                 final EditText password = (EditText) dialog_layout.findViewById(R.id.sshpassword);
 
-                String currIpAddress = prefs.getString("ipaddress", null);
-                String currusername = prefs.getString("sshusername", null);
-                String currpassword = prefs.getString("sshpassword", null);
-
-                IpAddress.setText(currIpAddress);
-                username.setText(currusername);
-                password.setText(currpassword);
-
                 builder.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        prefs.edit().putString("ipaddress", IpAddress.getText().toString()).commit();
-                        prefs.edit().putString("sshusername", username.getText().toString()).commit();
-                        prefs.edit().putString("sshpassword", password.getText().toString()).commit();
+                        Profiles.add(new Profile(ProfileName.getText().toString(), IpAddress.getText().toString(), username.getText().toString(), password.getText().toString()));
 
-                        ConnectSSH();
+                        SaveProfiles();
+
+                        SelectProfile();
                     }
                 });
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -304,11 +414,9 @@ public class MainActivity extends Activity {
             public void run() {
                 try {
                     JSch jsch = new JSch();
-                    String IpAddress = prefs.getString("ipaddress", null);
-                    String username = prefs.getString("sshusername", null);
-                    String password = prefs.getString("sshpassword", null);
-                    session = jsch.getSession(username, IpAddress, 22);
-                    session.setPassword(password);
+                    Profile p = Profiles.get(CurrProfile);
+                    session = jsch.getSession(p.Username, p.IpAddress, 22);
+                    session.setPassword(p.Password);
                     Properties config = new Properties();
                     config.put("StrictHostKeyChecking", "no");
                     session.setConfig(config);
@@ -368,9 +476,9 @@ public class MainActivity extends Activity {
                         finish();
                     }
                 });
-                builder.setPositiveButton("Change settings", new DialogInterface.OnClickListener() {
+                builder.setPositiveButton("Change profile", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        ShowSetupDialog();
+                        SelectProfile();
                     }
                 });
                 builder.show();
