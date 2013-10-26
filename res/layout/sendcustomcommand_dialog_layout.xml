@@ -1,0 +1,19 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:padding="10dip">
+
+    <TextView      
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enter the custom command"
+    />
+    
+    <EditText
+        android:id="@+id/customcommand"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dip" 
+        android:inputType="text|textEmailAddress" /> 
+ 
+</RelativeLayout>

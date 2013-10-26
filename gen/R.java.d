@@ -15,6 +15,7 @@ C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\layout\menu.xml \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\layout\profile_dialog_layout.xml \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\layout\refreshrate_dialog_layout.xml \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\layout\select_profile_dialog_layout.xml \
+C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\layout\sendcustomcommand_dialog_layout.xml \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\values\colors.xml \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\values\strings.xml \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\bin\res\drawable\cpu.png \

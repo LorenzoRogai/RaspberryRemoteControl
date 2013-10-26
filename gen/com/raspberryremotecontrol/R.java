@@ -29,15 +29,16 @@ public final class R {
     public static final class id {
         public static final int ProgressBar=0x7f060002;
         public static final int changerefreshrate=0x7f060006;
+        public static final int customcommand=0x7f060007;
         public static final int imgIcon=0x7f060000;
-        public static final int ipaddress=0x7f060008;
+        public static final int ipaddress=0x7f060009;
         public static final int listView=0x7f060004;
-        public static final int numberPicker1=0x7f06000b;
-        public static final int profilename=0x7f060007;
-        public static final int profiles=0x7f06000c;
+        public static final int numberPicker1=0x7f06000c;
+        public static final int profilename=0x7f060008;
+        public static final int profiles=0x7f06000d;
         public static final int showprofiles=0x7f060005;
-        public static final int sshpassword=0x7f06000a;
-        public static final int sshusername=0x7f060009;
+        public static final int sshpassword=0x7f06000b;
+        public static final int sshusername=0x7f06000a;
         public static final int txtDesc=0x7f060003;
         public static final int txtTitle=0x7f060001;
     }
@@ -48,6 +49,7 @@ public final class R {
         public static final int profile_dialog_layout=0x7f030003;
         public static final int refreshrate_dialog_layout=0x7f030004;
         public static final int select_profile_dialog_layout=0x7f030005;
+        public static final int sendcustomcommand_dialog_layout=0x7f030006;
     }
     public static final class string {
         public static final int app_name=0x7f050000;

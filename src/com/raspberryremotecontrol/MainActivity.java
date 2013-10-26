@@ -200,6 +200,40 @@ public class MainActivity extends Activity {
             case R.id.changerefreshrate:
                 ShowChangeRefreshRateDialog();
                 return true;
+            case R.id.customcommand:
+                final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                final View dialog_layout = getLayoutInflater().inflate(R.layout.sendcustomcommand_dialog_layout, null);
+                builder.setTitle("Send custom command");
+
+                final EditText et = (EditText) dialog_layout.findViewById(R.id.customcommand);
+
+                builder.setNegativeButton("Close", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
+                builder.setPositiveButton("Send", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        String output = ExecuteCommand(et.getText().toString());
+
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setMessage(output)
+                                .setTitle("Output")
+                                .setCancelable(true)
+                                .setPositiveButton(android.R.string.ok,
+                                new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                            }
+                        })
+                        .show();
+                    }
+                });
+
+
+                final AlertDialog Dialog = builder.create();
+
+                Dialog.setView(dialog_layout);
+                Dialog.show();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -440,6 +474,13 @@ public class MainActivity extends Activity {
             if (session.isConnected()) {
                 channel = (ChannelExec) session.openChannel("exec");
                 in = new BufferedReader(new InputStreamReader(channel.getInputStream()));
+
+                Profile p = Profiles.get(CurrProfile);
+                String username = p.Username;
+                if (!username.equals("root")) {
+                    command = "sudo " + command;
+                }
+
                 channel.setCommand(command);
                 channel.connect();
 

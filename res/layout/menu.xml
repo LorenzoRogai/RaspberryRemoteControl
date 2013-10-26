@@ -9,4 +9,7 @@
         android:id="@+id/changerefreshrate"        
         android:title="Change refresh rate"/>   
  
+      <item
+        android:id="@+id/customcommand"        
+        android:title="Send custom command"/>   
 </menu>
