@@ -215,7 +215,7 @@ public class MainActivity extends Activity {
                     public void onClick(DialogInterface dialog, int which) {
                         String output = ExecuteCommand(et.getText().toString());
 
-                        new AlertDialog.Builder(MainActivity.this)
+                        AlertDialog outDialog = new AlertDialog.Builder(MainActivity.this)
                                 .setMessage(output)
                                 .setTitle("Output")
                                 .setCancelable(true)
@@ -225,7 +225,9 @@ public class MainActivity extends Activity {
                             }
                         })
                         .show();
-                    }
+                        TextView textView = (TextView) outDialog.findViewById(android.R.id.message);
+                        textView.setTypeface(android.graphics.Typeface.MONOSPACE);
+                     }
                 });
 
 
@@ -402,23 +404,28 @@ public class MainActivity extends Activity {
 
                             infos[8].Description = "";
 
-                            Integer percentages = 0;
-                            for (int i = 1; i < lines.length; i++) {
+                            Integer totalSize = 0;
+                            Integer usedSize = 0;
+                            Integer partSize = 0;
+                            Integer partUsed = 0;
+                            for (int i = 0; i < lines.length; i++) {
                                 String line = lines[i];
                                 line = line.replaceAll("\\s+", "|");
                                 String[] DriveInfos = line.split("\\|");
                                 String name = DriveInfos[6];
-                                String total = kConv(Integer.parseInt(DriveInfos[2]));
+                                partSize = Integer.parseInt(DriveInfos[2]);
+                                String total = kConv(partSize);
                                 String free = kConv(Integer.parseInt(DriveInfos[4]));
-                                String used = kConv(Integer.parseInt(DriveInfos[3]));
+                                partUsed = Integer.parseInt(DriveInfos[3]);
+                                String used = kConv(partUsed);
                                 String format = DriveInfos[1];
-                                Integer percentage = Integer.parseInt(DriveInfos[5].replace("%", ""));
-                                percentages += percentage;
-
+                                totalSize += partSize;
+                                usedSize += partUsed;
                                 infos[8].Description += name + "\n" + "Free: " + free + " · used: " + used + "\nTotal: " + total + " · format: " + format + ((i == (lines.length - 1)) ? "" : "\n\n");
                             }
 
-                            infos[8].ProgressBarProgress = percentages / (lines.length - 1);
+                            Integer percentage = usedSize  * 100 / totalSize;
+                            infos[8].ProgressBarProgress = percentage;
 
                             runOnUiThread(new Runnable() {
                                 public void run() {
