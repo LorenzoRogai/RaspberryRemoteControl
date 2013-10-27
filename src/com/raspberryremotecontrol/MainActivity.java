@@ -408,7 +408,7 @@ public class MainActivity extends Activity {
                             Integer usedSize = 0;
                             Integer partSize = 0;
                             Integer partUsed = 0;
-                            for (int i = 0; i < lines.length; i++) {
+                            for (int i = 1; i < lines.length; i++) {
                                 String line = lines[i];
                                 line = line.replaceAll("\\s+", "|");
                                 String[] DriveInfos = line.split("\\|");
