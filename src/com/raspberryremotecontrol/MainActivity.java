@@ -399,7 +399,7 @@ public class MainActivity extends Activity {
 
                             infos[7].Description = "Loads\n" + loadavg[0] + " [1 min] · " + loadavg[1] + " [5 min] · " + loadavg[2] + " [15 min]\nRunning at " + cpuCurFreq + "\n(min: " + cpuMinFreq + " · max: " + cpuMaxFreq + ")";
 
-                            String Drives = ExecuteCommand("df -T | grep -vE \"tmpfs|rootfs|Filesystem\"");
+                            String Drives = ExecuteCommand("df -T | grep -vE \"tmpfs|rootfs|Filesystem|File system\"");
                             lines = Drives.split(System.getProperty("line.separator"));
 
                             infos[8].Description = "";
