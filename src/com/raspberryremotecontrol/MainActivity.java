@@ -26,6 +26,7 @@ public class MainActivity extends Activity {
     Integer refreshrate = 5000;
     List<Profile> Profiles = new ArrayList<Profile>();
     int CurrProfile = -1;
+    Boolean paused = false;
     Info infos[] = new Info[]{
         new Info(R.drawable.hostname, "Hostname", "", -1),
         new Info(R.drawable.distribution, "Distribution", "", -1),
@@ -133,6 +134,13 @@ public class MainActivity extends Activity {
                     public void onClick(DialogInterface dialog, int id) {
                         CurrProfile = lastChecked;
 
+                        for (int i = 0; i < infos.length; i++) {
+                            infos[i].Description = "";
+                            if (infos[i].ProgressBarProgress != -1) {
+                                infos[i].ProgressBarProgress = 0;
+                            }
+                        }
+
                         ConnectSSH();
                     }
                 });
@@ -224,10 +232,10 @@ public class MainActivity extends Activity {
                             public void onClick(DialogInterface dialog, int whichButton) {
                             }
                         })
-                        .show();
+                                .show();
                         TextView textView = (TextView) outDialog.findViewById(android.R.id.message);
                         textView.setTypeface(android.graphics.Typeface.MONOSPACE);
-                     }
+                    }
                 });
 
 
@@ -346,97 +354,126 @@ public class MainActivity extends Activity {
                 DecimalFormat df;
                 try {
                     while (isOnline() && session.isConnected()) {
-                        try {
-                            if (infos[0].Description.equals("")) {
-                                String hostname = ExecuteCommand("hostname -f");
-                                infos[0].Description = hostname;
-                            }
-                            if (infos[1].Description.equals("")) {
-                                String distribution = ExecuteCommand("cat /etc/*-release | grep PRETTY_NAME=");
-                                distribution = distribution.replace("PRETTY_NAME=\"", "");
-                                distribution = distribution.replace("\"", "");
-                                infos[1].Description = distribution;
-                            }
-                            if (infos[2].Description.equals("")) {
-                                String kernel = ExecuteCommand("uname -mrs");
-                                infos[2].Description = kernel;
-                            }
-                            if (infos[3].Description.equals("")) {
-                                String firmware = ExecuteCommand("uname -v");
-                                infos[3].Description = firmware;
-                            }
-                            df = new DecimalFormat("0.0");
-                            String cputemp = df.format(Float.parseFloat(ExecuteCommand("cat /sys/class/thermal/thermal_zone0/temp")) / 1000) + "'C";
-                            infos[4].Description = cputemp;
+                        while (!paused) {
 
-                            Double d = Double.parseDouble(ExecuteCommand("cat /proc/uptime").split(" ")[0]);
-                            Integer uptimeseconds = d.intValue();
-                            String uptime = convertMS(uptimeseconds * 1000);
-                            infos[5].Description = uptime;
-
-                            String info = ExecuteCommand("cat /proc/meminfo");
-                            info = info.replaceAll(" ", "");
-                            info = info.replaceAll("kB", "");
-                            String[] lines = info.split(System.getProperty("line.separator"));
-                            df = new DecimalFormat("0");
-                            Integer MemTot = Integer.parseInt(df.format(Integer.parseInt(lines[0].substring(lines[0].indexOf(":") + 1)) / 1024.0f));
-                            Integer MemFree = Integer.parseInt(df.format(Integer.parseInt(lines[1].substring(lines[1].indexOf(":") + 1)) / 1024.0f));
-                            Integer Buffers = Integer.parseInt(df.format(Integer.parseInt(lines[2].substring(lines[2].indexOf(":") + 1)) / 1024.0f));
-                            Integer Cached = Integer.parseInt(df.format(Integer.parseInt(lines[3].substring(lines[3].indexOf(":") + 1)) / 1024.0f));
-                            Integer Used = MemTot - MemFree;
-                            Integer fMemFree = MemFree + Buffers + Cached;
-                            Integer MemUsed = Used - Buffers - Cached;
-                            Integer Percentage = Integer.parseInt(df.format((float) ((float) MemUsed / (float) MemTot) * 100.0f));
-
-                            infos[6].Description = "Used: " + MemUsed + "Mb\nFree: " + fMemFree + "Mb\nTot: " + MemTot + "Mb";
-                            infos[6].ProgressBarProgress = Percentage;
-
-                            df = new DecimalFormat("0.0");
-                            String[] loadavg = ExecuteCommand("cat /proc/loadavg").split(" ");
-                            String cpuCurFreq = df.format(Float.parseFloat(ExecuteCommand("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")) / 1000) + "Mhz";
-                            String cpuMinFreq = df.format(Float.parseFloat(ExecuteCommand("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq")) / 1000) + "Mhz";
-                            String cpuMaxFreq = df.format(Float.parseFloat(ExecuteCommand("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq")) / 1000) + "Mhz";
-
-                            infos[7].Description = "Loads\n" + loadavg[0] + " [1 min] · " + loadavg[1] + " [5 min] · " + loadavg[2] + " [15 min]\nRunning at " + cpuCurFreq + "\n(min: " + cpuMinFreq + " · max: " + cpuMaxFreq + ")";
-
-                            String Drives = ExecuteCommand("df -T | grep -vE \"tmpfs|rootfs|Filesystem|File system\"");
-                            lines = Drives.split(System.getProperty("line.separator"));
-
-                            infos[8].Description = "";
-
-                            Integer totalSize = 0;
-                            Integer usedSize = 0;
-                            Integer partSize = 0;
-                            Integer partUsed = 0;
-                            for (int i = 0; i < lines.length; i++) {
-                                String line = lines[i];
-                                line = line.replaceAll("\\s+", "|");
-                                String[] DriveInfos = line.split("\\|");
-                                String name = DriveInfos[6];
-                                partSize = Integer.parseInt(DriveInfos[2]);
-                                String total = kConv(partSize);
-                                String free = kConv(Integer.parseInt(DriveInfos[4]));
-                                partUsed = Integer.parseInt(DriveInfos[3]);
-                                String used = kConv(partUsed);
-                                String format = DriveInfos[1];
-                                totalSize += partSize;
-                                usedSize += partUsed;
-                                infos[8].Description += name + "\n" + "Free: " + free + " · used: " + used + "\nTotal: " + total + " · format: " + format + ((i == (lines.length - 1)) ? "" : "\n\n");
-                            }
-
-                            Integer percentage = usedSize  * 100 / totalSize;
-                            infos[8].ProgressBarProgress = percentage;
-
-                            runOnUiThread(new Runnable() {
-                                public void run() {
-                                    BuildList();
+                            try {
+                                if (infos[0].Description.equals("")) {
+                                    String hostname = ExecuteCommand("hostname -f");
+                                    infos[0].Description = hostname;
                                 }
-                            });
+                                if (infos[1].Description.equals("")) {
+                                    String distribution = ExecuteCommand("cat /etc/*-release | grep PRETTY_NAME=");
+                                    distribution = distribution.replace("PRETTY_NAME=\"", "");
+                                    distribution = distribution.replace("\"", "");
+                                    infos[1].Description = distribution;
+                                }
+                                if (infos[2].Description.equals("")) {
+                                    String kernel = ExecuteCommand("uname -mrs");
+                                    infos[2].Description = kernel;
+                                }
+                                if (infos[3].Description.equals("")) {
+                                    String firmware = ExecuteCommand("uname -v");
+                                    infos[3].Description = firmware;
+                                }
+                                df = new DecimalFormat("0.0");
+                                String cputemp_str = ExecuteCommand("cat /sys/class/thermal/thermal_zone0/temp");
 
-                            Thread.sleep(refreshrate);
+                                if (!cputemp_str.isEmpty()) {
+                                    String cputemp = df.format(Float
+                                            .parseFloat(cputemp_str) / 1000) + "'C";
+                                    infos[4].Description = cputemp;
+                                } else {
+                                    infos[4].Description = "* not available *";
+                                }
 
-                        } catch (Exception e) {
-                            ThrowException(e.getMessage());
+                                Double d = Double.parseDouble(ExecuteCommand("cat /proc/uptime").split(" ")[0]);
+                                Integer uptimeseconds = d.intValue();
+                                String uptime = convertMS(uptimeseconds * 1000);
+                                infos[5].Description = uptime;
+
+                                String info = ExecuteCommand("cat /proc/meminfo");
+                                info = info.replaceAll(" ", "");
+                                info = info.replaceAll("kB", "");
+                                String[] lines = info.split(System.getProperty("line.separator"));
+                                df = new DecimalFormat("0");
+                                Integer MemTot = Integer.parseInt(df.format(Integer.parseInt(lines[0].substring(lines[0].indexOf(":") + 1)) / 1024.0f));
+                                Integer MemFree = Integer.parseInt(df.format(Integer.parseInt(lines[1].substring(lines[1].indexOf(":") + 1)) / 1024.0f));
+                                Integer Buffers = Integer.parseInt(df.format(Integer.parseInt(lines[2].substring(lines[2].indexOf(":") + 1)) / 1024.0f));
+                                Integer Cached = Integer.parseInt(df.format(Integer.parseInt(lines[3].substring(lines[3].indexOf(":") + 1)) / 1024.0f));
+                                Integer Used = MemTot - MemFree;
+                                Integer fMemFree = MemFree + Buffers + Cached;
+                                Integer MemUsed = Used - Buffers - Cached;
+                                Integer Percentage = Integer.parseInt(df.format((float) ((float) MemUsed / (float) MemTot) * 100.0f));
+
+                                infos[6].Description = "Used: " + MemUsed + "Mb\nFree: " + fMemFree + "Mb\nTot: " + MemTot + "Mb";
+                                infos[6].ProgressBarProgress = Percentage;
+
+                                df = new DecimalFormat("0.0");
+                                String[] loadavg = ExecuteCommand(
+                                        "cat /proc/loadavg").split(" ");
+                                String cpuCurFreq_cmd = ExecuteCommand("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq");
+
+                                String cpuCurFreq = "*N/A*";
+                                if (!cpuCurFreq_cmd.isEmpty()) {
+                                    cpuCurFreq = df.format(Float
+                                            .parseFloat(cpuCurFreq_cmd) / 1000) + "Mhz";
+                                }
+                                String cpuMinFreq_cmd = ExecuteCommand("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq");
+
+                                String cpuMinFreq = "*N/A*";
+                                if (!cpuMinFreq_cmd.isEmpty()) {
+                                    cpuMinFreq = df.format(Float
+                                            .parseFloat(cpuMinFreq_cmd) / 1000) + "Mhz";
+                                }
+                                String cpuMaxFreq_cmd = ExecuteCommand("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq");
+
+                                String cpuMaxFreq = "*N/A*";
+                                if (!cpuMaxFreq_cmd.isEmpty()) {
+                                    cpuMaxFreq = df.format(Float
+                                            .parseFloat(cpuMaxFreq_cmd) / 1000) + "Mhz";
+                                }
+
+                                infos[7].Description = "Loads\n" + loadavg[0] + " [1 min] · " + loadavg[1] + " [5 min] · " + loadavg[2] + " [15 min]\nRunning at " + cpuCurFreq + "\n(min: " + cpuMinFreq + " · max: " + cpuMaxFreq + ")";
+
+                                String Drives = ExecuteCommand("df -T | grep -vE \"tmpfs|rootfs|Filesystem|File system\"");
+                                lines = Drives.split(System.getProperty("line.separator"));
+
+                                infos[8].Description = "";
+
+                                Integer totalSize = 0;
+                                Integer usedSize = 0;
+                                Integer partSize = 0;
+                                Integer partUsed = 0;
+                                for (int i = 0; i < lines.length; i++) {
+                                    String line = lines[i];
+                                    line = line.replaceAll("\\s+", "|");
+                                    String[] DriveInfos = line.split("\\|");
+                                    String name = DriveInfos[6];
+                                    partSize = Integer.parseInt(DriveInfos[2]);
+                                    String total = kConv(partSize);
+                                    String free = kConv(Integer.parseInt(DriveInfos[4]));
+                                    partUsed = Integer.parseInt(DriveInfos[3]);
+                                    String used = kConv(partUsed);
+                                    String format = DriveInfos[1];
+                                    totalSize += partSize;
+                                    usedSize += partUsed;
+                                    infos[8].Description += name + "\n" + "Free: " + free + " · used: " + used + "\nTotal: " + total + " · format: " + format + ((i == (lines.length - 1)) ? "" : "\n\n");
+                                }
+
+                                Integer percentage = usedSize * 100 / totalSize;
+                                infos[8].ProgressBarProgress = percentage;
+
+                                runOnUiThread(new Runnable() {
+                                    public void run() {
+                                        BuildList();
+                                    }
+                                });
+
+                                Thread.sleep(refreshrate);
+
+                            } catch (Exception e) {
+                                ThrowException(e.getMessage());
+                            }
                         }
                     }
 
@@ -598,12 +635,22 @@ public class MainActivity extends Activity {
     public static String kConv(Integer kSize) {
         char[] unit = {'K', 'M', 'G', 'T'};
         Integer i = 0;
-        Integer size = kSize;
-        while (i < 3 && size > 1024) {
+        Float fSize = (float) (kSize * 1.0);
+        while (i < 3 && fSize > 1024) {
             i++;
-            size = size / 1024;
+            fSize = fSize / 1024;
         }
         DecimalFormat df = new DecimalFormat("0.00");
-        return df.format(size) + unit[i];
+        return df.format(fSize) + unit[i];
+    }
+
+    protected void onPause() {
+        paused = true;
+        super.onPause();
+    }
+
+    protected void onResume() {
+        paused = false;
+        super.onResume();
     }
 }
