@@ -11,7 +11,7 @@ import android.widget.*;
 import android.content.*;
 import android.content.Context;
 import android.graphics.drawable.*;
-
+import java.util.*;
 /**
  *
  * @author Lorenzo
@@ -20,9 +20,9 @@ public class InfoAdapter extends ArrayAdapter<Info> {
 
     Context context;
     int layoutResourceId;
-    Info data[] = null;
+    List<Info> data = null;
 
-    public InfoAdapter(Context context, int layoutResourceId, Info[] data) {
+    public InfoAdapter(Context context, int layoutResourceId, List<Info> data) {
         super(context, layoutResourceId, data);
         this.layoutResourceId = layoutResourceId;
         this.context = context;
@@ -49,7 +49,7 @@ public class InfoAdapter extends ArrayAdapter<Info> {
             holder = (InfoHolder) row.getTag();
         }
 
-        Info info = data[position];
+        Info info = data.get(position);
         holder.txtName.setText(info.Name);
         holder.imgIcon.setImageResource(info.Icon);
         holder.txtDescription.setText(info.Description);
@@ -70,7 +70,7 @@ public class InfoAdapter extends ArrayAdapter<Info> {
         return row;
     }
 
-    public void Update(Info[] data) {
+    public void Update(List<Info> data) {
         this.data = data;
         notifyDataSetChanged();
     }

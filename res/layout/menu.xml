@@ -2,6 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
  
     <item
+        android:id="@+id/managedevices"        
+        android:title="Manage devices"/>     
+    
+    <item
         android:id="@+id/showprofiles"        
         android:title="Show profiles"/>     
     

@@ -27,17 +27,8 @@ public class MainActivity extends Activity {
     List<Profile> Profiles = new ArrayList<Profile>();
     int CurrProfile = -1;
     Boolean paused = false;
-    Info infos[] = new Info[]{
-        new Info(R.drawable.hostname, "Hostname", "", -1),
-        new Info(R.drawable.distribution, "Distribution", "", -1),
-        new Info(R.drawable.kernel, "Kernel", "", -1),
-        new Info(R.drawable.firmware, "Firmware", "", -1),
-        new Info(R.drawable.cpuheat, "Cpu Heat", "", -1),
-        new Info(R.drawable.uptime, "Uptime", "", -1),
-        new Info(R.drawable.ram, "Ram Info", "", -1),
-        new Info(R.drawable.cpu, "Cpu", "", -1),
-        new Info(R.drawable.storage, "Storage", "", -1)
-    };
+    List<Info> Infos = new ArrayList<Info>();
+    List<Info> Devices = new ArrayList<Info>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -60,6 +51,17 @@ public class MainActivity extends Activity {
         } else {
             SelectProfile();
         }
+
+        Infos.add(new Info(R.drawable.hostname, "Hostname", "", -1));
+        Infos.add(new Info(R.drawable.distribution, "Distribution", "", -1));
+        Infos.add(new Info(R.drawable.kernel, "Kernel", "", -1));
+        Infos.add(new Info(R.drawable.firmware, "Firmware", "", -1));
+        Infos.add(new Info(R.drawable.cpuheat, "Cpu Heat", "", -1));
+        Infos.add(new Info(R.drawable.uptime, "Uptime", "", -1));
+        Infos.add(new Info(R.drawable.ram, "Ram Info", "", -1));
+        Infos.add(new Info(R.drawable.cpu, "Cpu", "", -1));
+        Infos.add(new Info(R.drawable.storage, "Storage", "", -1));
+        Infos.add(new Info(R.drawable.network, "Network", "", -1));
     }
 
     private void FetchProfiles() {
@@ -134,10 +136,10 @@ public class MainActivity extends Activity {
                     public void onClick(DialogInterface dialog, int id) {
                         CurrProfile = lastChecked;
 
-                        for (int i = 0; i < infos.length; i++) {
-                            infos[i].Description = "";
-                            if (infos[i].ProgressBarProgress != -1) {
-                                infos[i].ProgressBarProgress = 0;
+                        for (int i = 0; i < Infos.size(); i++) {
+                            Infos.get(i).Description = "";
+                            if (Infos.get(i).ProgressBarProgress != -1) {
+                                Infos.get(i).ProgressBarProgress = 0;
                             }
                         }
 
@@ -202,6 +204,10 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
+            case R.id.managedevices:
+                adapter = null;
+                current = 1;
+                return true;
             case R.id.showprofiles:
                 SelectProfile();
                 return true;
@@ -228,16 +234,15 @@ public class MainActivity extends Activity {
                                 .setTitle("Output")
                                 .setCancelable(true)
                                 .setPositiveButton(android.R.string.ok,
-                                new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int whichButton) {
-                            }
-                        })
+                                        new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int whichButton) {
+                                            }
+                                        })
                                 .show();
                         TextView textView = (TextView) outDialog.findViewById(android.R.id.message);
                         textView.setTypeface(android.graphics.Typeface.MONOSPACE);
                     }
                 });
-
 
                 final AlertDialog Dialog = builder.create();
 
@@ -334,17 +339,22 @@ public class MainActivity extends Activity {
         return true;
     }
 
-    public void BuildList() {
+    public void BuildList(List<Info> data) {
         if (adapter == null) {
             adapter = new InfoAdapter(this,
-                    R.layout.listview_item_row, infos);
+                    R.layout.listview_item_row, data);
 
             listView = (ListView) findViewById(R.id.listView);
             listView.setAdapter(adapter);
         } else {
-            adapter.Update(infos);
+            adapter.Update(data);
         }
     }
+
+    int current = 0;
+    
+    String internalip = "";
+    String externalip = "";
 
     public void StartUpdateLoop() {
 
@@ -357,23 +367,23 @@ public class MainActivity extends Activity {
                         while (!paused) {
 
                             try {
-                                if (infos[0].Description.equals("")) {
+                                if (Infos.get(0).Description.equals("")) {
                                     String hostname = ExecuteCommand("hostname -f");
-                                    infos[0].Description = hostname;
+                                    Infos.get(0).Description = hostname;
                                 }
-                                if (infos[1].Description.equals("")) {
+                                if (Infos.get(1).Description.equals("")) {
                                     String distribution = ExecuteCommand("cat /etc/*-release | grep PRETTY_NAME=");
                                     distribution = distribution.replace("PRETTY_NAME=\"", "");
                                     distribution = distribution.replace("\"", "");
-                                    infos[1].Description = distribution;
+                                    Infos.get(1).Description = distribution;
                                 }
-                                if (infos[2].Description.equals("")) {
+                                if (Infos.get(2).Description.equals("")) {
                                     String kernel = ExecuteCommand("uname -mrs");
-                                    infos[2].Description = kernel;
+                                    Infos.get(2).Description = kernel;
                                 }
-                                if (infos[3].Description.equals("")) {
+                                if (Infos.get(3).Description.equals("")) {
                                     String firmware = ExecuteCommand("uname -v");
-                                    infos[3].Description = firmware;
+                                    Infos.get(3).Description = firmware;
                                 }
                                 df = new DecimalFormat("0.0");
                                 String cputemp_str = ExecuteCommand("cat /sys/class/thermal/thermal_zone0/temp");
@@ -381,15 +391,15 @@ public class MainActivity extends Activity {
                                 if (!cputemp_str.isEmpty()) {
                                     String cputemp = df.format(Float
                                             .parseFloat(cputemp_str) / 1000) + "'C";
-                                    infos[4].Description = cputemp;
+                                    Infos.get(4).Description = cputemp;
                                 } else {
-                                    infos[4].Description = "* not available *";
+                                    Infos.get(4).Description = "* not available *";
                                 }
 
                                 Double d = Double.parseDouble(ExecuteCommand("cat /proc/uptime").split(" ")[0]);
                                 Integer uptimeseconds = d.intValue();
                                 String uptime = convertMS(uptimeseconds * 1000);
-                                infos[5].Description = uptime;
+                                Infos.get(5).Description = uptime;
 
                                 String info = ExecuteCommand("cat /proc/meminfo");
                                 info = info.replaceAll(" ", "");
@@ -405,8 +415,8 @@ public class MainActivity extends Activity {
                                 Integer MemUsed = Used - Buffers - Cached;
                                 Integer Percentage = Integer.parseInt(df.format((float) ((float) MemUsed / (float) MemTot) * 100.0f));
 
-                                infos[6].Description = "Used: " + MemUsed + "Mb\nFree: " + fMemFree + "Mb\nTot: " + MemTot + "Mb";
-                                infos[6].ProgressBarProgress = Percentage;
+                                Infos.get(6).Description = "Used: " + MemUsed + "Mb\nFree: " + fMemFree + "Mb\nTot: " + MemTot + "Mb";
+                                Infos.get(6).ProgressBarProgress = Percentage;
 
                                 df = new DecimalFormat("0.0");
                                 String[] loadavg = ExecuteCommand(
@@ -433,12 +443,12 @@ public class MainActivity extends Activity {
                                             .parseFloat(cpuMaxFreq_cmd) / 1000) + "Mhz";
                                 }
 
-                                infos[7].Description = "Loads\n" + loadavg[0] + " [1 min] · " + loadavg[1] + " [5 min] · " + loadavg[2] + " [15 min]\nRunning at " + cpuCurFreq + "\n(min: " + cpuMinFreq + " · max: " + cpuMaxFreq + ")";
+                                Infos.get(7).Description = "Loads\n" + loadavg[0] + " [1 min] · " + loadavg[1] + " [5 min] · " + loadavg[2] + " [15 min]\nRunning at " + cpuCurFreq + "\n(min: " + cpuMinFreq + " · max: " + cpuMaxFreq + ")";
 
                                 String Drives = ExecuteCommand("df -T | grep -vE \"tmpfs|rootfs|Filesystem|File system\"");
                                 lines = Drives.split(System.getProperty("line.separator"));
 
-                                infos[8].Description = "";
+                                Infos.get(8).Description = "";
 
                                 Integer totalSize = 0;
                                 Integer usedSize = 0;
@@ -457,15 +467,44 @@ public class MainActivity extends Activity {
                                     String format = DriveInfos[1];
                                     totalSize += partSize;
                                     usedSize += partUsed;
-                                    infos[8].Description += name + "\n" + "Free: " + free + " · used: " + used + "\nTotal: " + total + " · format: " + format + ((i == (lines.length - 1)) ? "" : "\n\n");
+
+                                    Integer percentage = partUsed * 100 / partSize;
+                                    
+                                    if (Devices.size() != lines.length) {
+                                        Devices.add(new Info(R.drawable.storage, name, "Free: " + free + " · used: " + used + "\nTotal: " + total + " · format: " + format, percentage));
+                                    }
+
+                                    Infos.get(8).Description += name + "\n" + "Free: " + free + " · used: " + used + "\nTotal: " + total + " · format: " + format + ((i == (lines.length - 1)) ? "" : "\n\n");
                                 }
 
                                 Integer percentage = usedSize * 100 / totalSize;
-                                infos[8].ProgressBarProgress = percentage;
+                                Infos.get(8).ProgressBarProgress = percentage;
+
+                                Integer connections = Integer.parseInt(ExecuteCommand("netstat -nta --inet | wc -l"));
+                                String data = ExecuteCommand("/sbin/ifconfig eth0 | grep RX\\ bytes");
+                                data = data.replace("RX bytes:", "");
+                                data = data.replace("TX bytes:", "");
+                                data = data.trim();
+                                String[] data1 = data.split(" ");
+                                Float rxRaw = Long.parseLong(data1[0]) / 1024.0f / 1024.0f;
+                                Float txRaw = Long.parseLong(data1[4]) / 1024.0f / 1024.0f;
+                                DecimalFormat f = new DecimalFormat("0.00");
+                                Float rx = Float.parseFloat(f.format(rxRaw).replace(",", "."));
+                                Float tx = Float.parseFloat(f.format(txRaw).replace(",", "."));
+                                Float total = Float.parseFloat(f.format(rx + tx).replace(",", "."));
+                                if (internalip.equals("")) {
+                                    internalip = ExecuteCommand("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'");
+                                }
+                                if (externalip.equals("")) {
+                                    externalip = ExecuteCommand("wget http://whatismyip.akamai.com -O - -q ; echo");
+                                }
+                                Infos.get(9).Description = "Internal IP: " + internalip + "\nExternal IP: " + externalip + "\n";
+                                Infos.get(9).Description += "Received: " + rx + "Mb · sent: " + tx + "Mb\nTotal: " + total + "Mb \n";
+                                Infos.get(9).Description += "Connections: " + connections;
 
                                 runOnUiThread(new Runnable() {
                                     public void run() {
-                                        BuildList();
+                                        BuildList((current == 0) ? Infos : Devices);
                                     }
                                 });
 
@@ -605,12 +644,13 @@ public class MainActivity extends Activity {
                 .setTitle("Confirm")
                 .setMessage("Are you sure you want to shutdown your Raspberry Pi?")
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                ExecuteCommand("shutdown -h now");
-                DisconnectSSH();
-            }
-        })
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ExecuteCommand("shutdown -h now");
+                        DisconnectSSH();
+                        android.os.Process.killProcess(android.os.Process.myPid());
+                    }
+                })
                 .setNegativeButton("No", null)
                 .show();
 
@@ -621,12 +661,12 @@ public class MainActivity extends Activity {
                 .setTitle("Confirm")
                 .setMessage("Are you sure you want to reboot your Raspberry Pi?")
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                ExecuteCommand("shutdown -r now");
-                DisconnectSSH();
-            }
-        })
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ExecuteCommand("shutdown -r now");
+                        DisconnectSSH();
+                    }
+                })
                 .setNegativeButton("No", null)
                 .show();
 
@@ -644,11 +684,13 @@ public class MainActivity extends Activity {
         return df.format(fSize) + unit[i];
     }
 
+    @Override
     protected void onPause() {
         paused = true;
         super.onPause();
     }
 
+    @Override
     protected void onResume() {
         paused = false;
         super.onResume();

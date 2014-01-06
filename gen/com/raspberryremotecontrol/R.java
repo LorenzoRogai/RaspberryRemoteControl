@@ -22,23 +22,25 @@ public final class R {
         public static final int hostname=0x7f020004;
         public static final int icon=0x7f020005;
         public static final int kernel=0x7f020006;
-        public static final int ram=0x7f020007;
-        public static final int storage=0x7f020008;
-        public static final int uptime=0x7f020009;
+        public static final int network=0x7f020007;
+        public static final int ram=0x7f020008;
+        public static final int storage=0x7f020009;
+        public static final int uptime=0x7f02000a;
     }
     public static final class id {
         public static final int ProgressBar=0x7f060002;
-        public static final int changerefreshrate=0x7f060006;
-        public static final int customcommand=0x7f060007;
+        public static final int changerefreshrate=0x7f060007;
+        public static final int customcommand=0x7f060008;
         public static final int imgIcon=0x7f060000;
-        public static final int ipaddress=0x7f060009;
+        public static final int ipaddress=0x7f06000a;
         public static final int listView=0x7f060004;
-        public static final int numberPicker1=0x7f06000c;
-        public static final int profilename=0x7f060008;
-        public static final int profiles=0x7f06000d;
-        public static final int showprofiles=0x7f060005;
-        public static final int sshpassword=0x7f06000b;
-        public static final int sshusername=0x7f06000a;
+        public static final int managedevices=0x7f060005;
+        public static final int numberPicker1=0x7f06000d;
+        public static final int profilename=0x7f060009;
+        public static final int profiles=0x7f06000e;
+        public static final int showprofiles=0x7f060006;
+        public static final int sshpassword=0x7f06000c;
+        public static final int sshusername=0x7f06000b;
         public static final int txtDesc=0x7f060003;
         public static final int txtTitle=0x7f060001;
     }

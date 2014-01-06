@@ -6,6 +6,7 @@ C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\drawable\firmware.p
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\drawable\hostname.png \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\drawable\icon.png \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\drawable\kernel.png \
+C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\drawable\network.png \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\drawable\ram.png \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\drawable\storage.png \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\res\drawable\uptime.png \
@@ -25,6 +26,7 @@ C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\bin\res\drawable\firmwa
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\bin\res\drawable\hostname.png \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\bin\res\drawable\icon.png \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\bin\res\drawable\kernel.png \
+C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\bin\res\drawable\network.png \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\bin\res\drawable\ram.png \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\bin\res\drawable\storage.png \
 C:\Users\Lorenzo\Documents\GitHub\RaspberryRemoteControl\bin\res\drawable\uptime.png \
